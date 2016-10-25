@@ -1,20 +1,13 @@
-express = require('express');
+var express = require('express');
+var bodyParser = require('body-parser');
+
 var app = express();
 var PORT = process.env.PORT || 3000;
-var todos = [{
-	id: 1,
-	description: 'buy milk',
-	completed: false
-}, {
-	id: 2,
-	description: 'pay phone bill',
-	completed: false
-}, {
-	id: 3,
-	description: 'eat all chocolates',
-	completed: true
-}
-];
+var todos = [];
+var todoNextId = 1;
+
+
+app.use(bodyParser.json());
 
 
 app.get('/', function(req,res){
@@ -27,14 +20,27 @@ app.get('/todos', function(req, res){
 });
 
 // GET/todos/:id
-app.get('/todos/:someId', function(req, res){
-	
+app.get('/todos/:someId', function(req, res){	
 	todos.forEach(function(todo){
 		if (todo.id === parseInt(req.params.someId)){
 			res.json(todo);
 		}
 	});
 	res.status(404).send();
+});
+
+// POST /todos
+app.post('/todos', function(req, res){
+	var body = req.body; 
+	// use the postman app to post a json object such as
+	// {"description": "buy milk",	"completed": false}
+	body.id = todoNextId;
+	todoNextId++;
+	todos.push(body);
+
+
+	// response shown down the page in postman
+	res.json(body);
 });
 
 
