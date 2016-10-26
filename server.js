@@ -15,9 +15,17 @@ app.get('/', function(req,res){
 	res.send('Todo API Root');
 });
 
-// GET/todos
+// GET/todos or GET/todos?completed=(true/false) 
 app.get('/todos', function(req, res){
-	res.json(todos);
+	filteredTodos = todos;
+
+	if (req.query.completed === "true"){
+		filteredTodos = _.where(filteredTodos, {completed: true});
+	} else if (req.query.completed === "false") {
+		filteredTodos = _.where(filteredTodos, {completed: false});
+	}
+
+	res.json(filteredTodos);
 });
 
 // GET/todos/:id
