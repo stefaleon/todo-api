@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('underscore');
+var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -67,26 +68,12 @@ app.post('/todos', function(req, res) {
 	// even if more keys and values are posted with the request object
 	var body = _.pick(req.body, 'description', 'completed');
 
-	// use the postman app to post a json object such as
-	// {"description": "buy milk",	"completed": false}
-	// validate that 'description' is a non empty string 
-	// and that 'completed' is a string
-	if (!_.isString(body.description) || !_.isBoolean(body.completed) || body.description.trim().length === 0)
-		return res.status(400).send();
-
-
-	// add id field and increase the todoNextId var by one
-	body.id = todoNextId++;
-
-	// clear description from blanks
-	body.description = body.description.trim();
-
-	// push body to the todos array
-	todos.push(body);
-
-
-	// response shown down the page in postman
-	res.json(body);
+	db.todo.create(body).then(function(todo){		
+		res.status(200).json(todo.toJSON());
+	}).catch(function(e){
+		res.status(400).json(e);
+	});
+		
 });
 
 // DELETE/todos/:id
@@ -155,6 +142,8 @@ app.put('/todos/:someId', function(req, res) {
 	}
 });
 
-app.listen(PORT, function() {
-	console.log('Express server started on port ' + PORT);
+db.sequelize.sync().then(function() {
+	app.listen(PORT, function() {
+		console.log('Express server started on port ' + PORT);
+	});
 });
