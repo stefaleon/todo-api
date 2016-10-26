@@ -47,17 +47,22 @@ app.get('/todos', function(req, res) {
 
 // GET/todos/:id
 app.get('/todos/:someId', function(req, res) {
-	// searching for a todo with a matching id in the todos array 
-	// by use of the _.findWhere method
+
+	// searching for a todo with a matching id 	
 	// the id has to match the request parameters entered -> someId
-	var matchedTodo = _.findWhere(todos, {
-		id: parseInt(req.params.someId)
-	});
-	if (matchedTodo) {
-		res.json(matchedTodo);
-	} else {
-		res.status(404).send();
-	}
+	var requestedId = parseInt(req.params.someId);
+
+	db.todo.findById(requestedId).then(function(todo) {
+			if (!!todo) {
+				res.json(todo.toJSON());
+			} else {
+				res.status(404).send();
+			}
+		},
+		function(e) {
+			res.status(500).send();
+		});
+
 });
 
 // POST /todos
@@ -68,12 +73,12 @@ app.post('/todos', function(req, res) {
 	// even if more keys and values are posted with the request object
 	var body = _.pick(req.body, 'description', 'completed');
 
-	db.todo.create(body).then(function(todo){		
+	db.todo.create(body).then(function(todo) {
 		res.status(200).json(todo.toJSON());
-	}).catch(function(e){
+	}).catch(function(e) {
 		res.status(400).json(e);
 	});
-		
+
 });
 
 // DELETE/todos/:id
