@@ -15,15 +15,27 @@ app.get('/', function(req,res){
 	res.send('Todo API Root');
 });
 
-// GET/todos or GET/todos?completed=(true/false) 
+// GET/todos 
+// or GET/todos?completed=(true/false)&q=(string_contained_in_description) 
 app.get('/todos', function(req, res){
 	filteredTodos = todos;
 
+	// filtering with the 'completed' key
 	if (req.query.completed === "true"){
 		filteredTodos = _.where(filteredTodos, {completed: true});
 	} else if (req.query.completed === "false") {
 		filteredTodos = _.where(filteredTodos, {completed: false});
 	}
+
+	// filtering with the 'description' key
+	// filtered array contains the objects that
+	// contain the query string in the description-value
+	if (req.query.hasOwnProperty('q') && req.query.q.length > 0){
+		filteredTodos = _.filter(filteredTodos, function(todo){
+			return todo.description.toLowerCase().indexOf(req.query.q) >= 0;
+		});
+	} 	
+
 
 	res.json(filteredTodos);
 });
