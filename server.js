@@ -32,7 +32,7 @@ app.get('/todos', function(req, res) {
 	// filtering with the 'description' key	
 	if (req.query.hasOwnProperty('q') && req.query.q.length > 0) {
 		whereObj.description = {
-			$iLike: '%' + req.query.q + '%'
+			$like: '%' + req.query.q + '%'
 		};
 	}
 
@@ -78,7 +78,7 @@ app.post('/todos', function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
 
 	db.todo.create(body).then(function(todo) {
-		res.status(200).json(todo.toJSON());
+		res.json(todo.toJSON());
 	}).catch(function(e) {
 		res.status(400).json(e);
 	});
@@ -151,6 +151,26 @@ app.put('/todos/:someId', function(req, res) {
 	});
 
 });
+
+
+// POST /users
+app.post('/users', function(req, res) {
+
+	// use the _.pick method to maintain only the
+	// 'email' and 'password' key-value pairs
+	// even if other attributes are posted with the request object
+	var body = _.pick(req.body, 'email', 'password');
+
+	db.user.create(body).then(function(user) {
+		res.status(200).json(user.toJSON());
+	}, function(e) {
+		res.status(400).json(e);
+	});
+
+});
+
+
+
 
 
 db.sequelize.sync().then(function() {
