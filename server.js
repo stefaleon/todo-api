@@ -88,23 +88,28 @@ app.post('/todos', function(req, res) {
 
 // DELETE/todos/:id
 app.delete('/todos/:someId', function(req, res) {
-	// searching for a todo with a matching id in the todos array 
-	// by use of the _.findWhere method
+
+	// searching for a todo with a matching id	
 	// the id has to match the request parameters entered -> someId
-	var matchedTodo = _.findWhere(todos, {
-		id: parseInt(req.params.someId)
+	var requestedId = parseInt(req.params.someId);
+
+
+	db.todo.destroy({
+		where: {
+			id: requestedId
+		}
+	}).then(function(rowsDeleted) {
+		if (rowsDeleted === 0) {
+			res.status(404).send();
+		} else {
+			res.status(204).send();
+		}
+	}, function(e) {
+		res.status(500).send();
 	});
-	if (matchedTodo) {
-		// remove the matched todo from the todos array
-		todos = _.without(todos, matchedTodo);
-		res.json(matchedTodo);
-		//responding with the deleted todo instead of res.status(200).send();
-	} else {
-		res.status(404).send().json({
-			"error": "no todo found with that id"
-		});
-	}
+
 });
+
 
 
 // PUT/todos/:id
