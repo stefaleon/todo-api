@@ -41,7 +41,7 @@ app.get('/todos', function(req, res) {
 	}).then(function(todos) {
 			res.json(todos);
 		},
-		function(e) {
+		function() {
 			res.status(500).send();
 		});
 
@@ -104,7 +104,7 @@ app.delete('/todos/:someId', function(req, res) {
 		} else {
 			res.status(204).send();
 		}
-	}, function(e) {
+	}, function() {
 		res.status(500).send();
 	});
 
@@ -119,44 +119,39 @@ app.put('/todos/:someId', function(req, res) {
 	// 'description' and 'completed' key-value pairs
 	// even if more keys and values are being send with the request object
 	var body = _.pick(req.body, 'description', 'completed');
-	var validAttributes = {};
+	var requestedId = parseInt(req.params.someId);
+	var attributes = {};
 
-	// check if 'completed' exists and validates
+	// check if 'completed' exists 
 	// then add to validAttributes object
-	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-		validAttributes.completed = body.completed;
-	} else if (body.hasOwnProperty('completed')) {
-		res.status(404).send()
+	if (body.hasOwnProperty('completed')) {
+		attributes.completed = body.completed;
 	}
 
-	// check if 'description' exists and validates
+	// check if 'description' exists 
 	// then add to validAttributes object
-	if (body.hasOwnProperty('description') &&
-		_.isString(body.description) &&
-		body.description.trim().length > 0) {
-		validAttributes.description = body.description;
-	} else if (body.hasOwnProperty('description')) {
-		res.status(404).send()
+	if (body.hasOwnProperty('description')) {
+		attributes.description = body.description;
 	}
 
-
-	// searching for a todo with a matching id in the todos array 
-	// by use of the _.findWhere method
+	// searching for a todo with a matching id 	
 	// the id has to match the request parameters entered -> someId
-	var matchedTodo = _.findWhere(todos, {
-		id: parseInt(req.params.someId)
+	db.todo.findById(requestedId).then(function(todo) {
+		if (todo) {
+			todo.update(attributes).then(function(todo) {
+				res.json(todo.toJSON());
+			}, function(e) {
+				res.status(400).json(e);
+			});
+		} else {
+			res.status(404).send();
+		}
+	}, function() {
+		res.status(500).send();
 	});
-	if (matchedTodo) {
-		// update the matched todo
-		_.extend(matchedTodo, validAttributes);
-		res.json(matchedTodo);
-		//responding with the matched todo instead of res.status(200).send();
-	} else {
-		res.status(404).send().json({
-			"error": "no todo found with that id"
-		});
-	}
+
 });
+
 
 db.sequelize.sync().then(function() {
 	app.listen(PORT, function() {
