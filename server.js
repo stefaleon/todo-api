@@ -32,7 +32,7 @@ app.get('/todos', function(req, res) {
 	// filtering with the 'description' key	
 	if (req.query.hasOwnProperty('q') && req.query.q.length > 0) {
 		whereObj.description = {
-			$like: '%' + req.query.q + '%'
+			$iLike: '%' + req.query.q + '%'
 		};
 	}
 
