@@ -16,34 +16,37 @@ app.get('/', function(req, res) {
 	res.send('Todo API Root');
 });
 
-// GET/todos 
-// or GET/todos?completed=(true/false)&q=(string_contained_in_description) 
+
+// GET/todos?completed=boolean&q=someString 
 app.get('/todos', function(req, res) {
-	filteredTodos = todos;
+	// if there is no query whereObj will remain empty
+	var whereObj = {};
 
 	// filtering with the 'completed' key
-	if (req.query.completed === "true") {
-		filteredTodos = _.where(filteredTodos, {
-			completed: true
-		});
+	if (req.query.hasOwnProperty('completed') && req.query.completed === "true") {
+		whereObj.completed = true;
 	} else if (req.query.completed === "false") {
-		filteredTodos = _.where(filteredTodos, {
-			completed: false
-		});
+		whereObj.completed = false;
 	}
 
-	// filtering with the 'description' key
-	// filtered array contains the objects that
-	// contain the query string in the description-value
+	// filtering with the 'description' key	
 	if (req.query.hasOwnProperty('q') && req.query.q.length > 0) {
-		filteredTodos = _.filter(filteredTodos, function(todo) {
-			return todo.description.toLowerCase().indexOf(req.query.q) >= 0;
-		});
+		whereObj.description = {
+			$like: '%' + req.query.q + '%'
+		};
 	}
 
+	db.todo.findAll({
+		where: whereObj
+	}).then(function(todos) {
+			res.json(todos);
+		},
+		function(e) {
+			res.status(500).send();
+		});
 
-	res.json(filteredTodos);
 });
+
 
 // GET/todos/:id
 app.get('/todos/:someId', function(req, res) {
@@ -65,6 +68,7 @@ app.get('/todos/:someId', function(req, res) {
 
 });
 
+
 // POST /todos
 app.post('/todos', function(req, res) {
 
@@ -80,6 +84,7 @@ app.post('/todos', function(req, res) {
 	});
 
 });
+
 
 // DELETE/todos/:id
 app.delete('/todos/:someId', function(req, res) {
@@ -100,6 +105,7 @@ app.delete('/todos/:someId', function(req, res) {
 		});
 	}
 });
+
 
 // PUT/todos/:id
 app.put('/todos/:someId', function(req, res) {
