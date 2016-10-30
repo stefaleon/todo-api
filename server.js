@@ -155,11 +155,7 @@ app.put('/todos/:someId', function(req, res) {
 
 
 // POST /users
-app.post('/users', function(req, res) {
-
-	// use the _.pick method to maintain only the
-	// 'email' and 'password' key-value pairs
-	// even if other attributes are posted with the request object
+app.post('/users', function(req, res) {	
 	var body = _.pick(req.body, 'email', 'password');
 
 	db.user.create(body).then(function(user) {
@@ -172,34 +168,19 @@ app.post('/users', function(req, res) {
 
 
 // POST /users/login
-app.post('/users/login', function(req, res) {
-
-	// use the _.pick method to maintain only the
-	// 'email' and 'password' key-value pairs
-	// even if other attributes are posted with the request object
+app.post('/users/login', function(req, res) {	
 	var body = _.pick(req.body, 'email', 'password');
 
-	if (typeof body.email !== 'string' || typeof body.password !== 'string') {
-		res.status(400).send();
-	}
-
-	db.user.findOne({
-		where: {
-			email: body.email
-		}
-	}).then(function(user) {
-		if (!user || !bcrypt.compareSync(body.password, user.get('password_hash'))) {
-			return res.status(401).send();
-		}
+	db.user.authenticate(body).then(function(user) {
 		res.json(user.toPublicJSON());
-	}, function(e) {
-		res.status(500).json(e);
+	}, function() {
+		res.status(401).send();
 	});
 
 });
 
 
-db.sequelize.sync().then(function() {
+db.sequelize.sync({force:true}).then(function() {
 	app.listen(PORT, function() {
 		console.log('Express server started on port ' + PORT);
 	});
