@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var _ = require('underscore');
 var db = require('./db.js');
 var bcrypt = require('bcryptjs');
+var middleware = require('./middleware.js')(db); 
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -19,7 +20,7 @@ app.get('/', function(req, res) {
 
 
 // GET/todos?completed=boolean&q=someString 
-app.get('/todos', function(req, res) {
+app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	// if there is no query whereObj will remain empty
 	var whereObj = {};
 
@@ -50,7 +51,7 @@ app.get('/todos', function(req, res) {
 
 
 // GET/todos/:id
-app.get('/todos/:someId', function(req, res) {
+app.get('/todos/:someId', middleware.requireAuthentication, function(req, res) {
 
 	// searching for a todo with a matching id 	
 	// the id has to match the request parameters entered -> someId
@@ -71,7 +72,7 @@ app.get('/todos/:someId', function(req, res) {
 
 
 // POST /todos
-app.post('/todos', function(req, res) {
+app.post('/todos', middleware.requireAuthentication, function(req, res) {
 
 	// use the _.pick method to maintain only the
 	// 'description' and 'completed' key-value pairs
@@ -88,7 +89,7 @@ app.post('/todos', function(req, res) {
 
 
 // DELETE/todos/:id
-app.delete('/todos/:someId', function(req, res) {
+app.delete('/todos/:someId', middleware.requireAuthentication, function(req, res) {
 
 	// searching for a todo with a matching id	
 	// the id has to match the request parameters entered -> someId
@@ -114,7 +115,7 @@ app.delete('/todos/:someId', function(req, res) {
 
 
 // PUT/todos/:id
-app.put('/todos/:someId', function(req, res) {
+app.put('/todos/:someId', middleware.requireAuthentication, function(req, res) {
 
 	// use the _.pick method to maintain only the
 	// 'description' and 'completed' key-value pairs
