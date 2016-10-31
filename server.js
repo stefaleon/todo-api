@@ -3,7 +3,7 @@ var bodyParser = require('body-parser');
 var _ = require('underscore');
 var db = require('./db.js');
 var bcrypt = require('bcryptjs');
-var middleware = require('./middleware.js')(db); 
+var middleware = require('./middleware.js')(db);
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -80,7 +80,11 @@ app.post('/todos', middleware.requireAuthentication, function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
 
 	db.todo.create(body).then(function(todo) {
-		res.json(todo.toJSON());
+		req.user.addTodo(todo).then(function() {
+			return todo.reload();
+		}).then(function(todo){
+			res.json(todo.toJSON());
+		});
 	}).catch(function(e) {
 		res.status(400).json(e);
 	});
@@ -156,7 +160,7 @@ app.put('/todos/:someId', middleware.requireAuthentication, function(req, res) {
 
 
 // POST /users
-app.post('/users', function(req, res) {	
+app.post('/users', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
 
 	db.user.create(body).then(function(user) {
@@ -169,12 +173,12 @@ app.post('/users', function(req, res) {
 
 
 // POST /users/login
-app.post('/users/login', function(req, res) {	
+app.post('/users/login', function(req, res) {
 	var body = _.pick(req.body, 'email', 'password');
 
 	db.user.authenticate(body).then(function(user) {
 		var token = user.generateToken('authentication');
-		if (token){
+		if (token) {
 			res.header('Auth', token).json(user.toPublicJSON());
 		} else {
 			res.status(401).send();
@@ -186,7 +190,9 @@ app.post('/users/login', function(req, res) {
 });
 
 
-db.sequelize.sync({force:true}).then(function() {
+db.sequelize.sync({
+	force: true
+}).then(function() {
 	app.listen(PORT, function() {
 		console.log('Express server started on port ' + PORT);
 	});
