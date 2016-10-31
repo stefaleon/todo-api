@@ -22,7 +22,10 @@ app.get('/', function(req, res) {
 // GET/todos?completed=boolean&q=someString 
 app.get('/todos', middleware.requireAuthentication, function(req, res) {
 	// if there is no query whereObj will remain empty
-	var whereObj = {};
+	var whereObj = {
+		// get those todos where their userId matches the requesting user id
+		userId: req.user.get('id')
+	};
 
 	// filtering with the 'completed' key
 	if (req.query.hasOwnProperty('completed') && req.query.completed === "true") {
@@ -57,7 +60,12 @@ app.get('/todos/:someId', middleware.requireAuthentication, function(req, res) {
 	// the id has to match the request parameters entered -> someId
 	var requestedId = parseInt(req.params.someId);
 
-	db.todo.findById(requestedId).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: requestedId,
+			userId: req.user.get('id')
+		}
+	}).then(function(todo) {
 			if (!!todo) {
 				res.json(todo.toJSON());
 			} else {
@@ -82,7 +90,7 @@ app.post('/todos', middleware.requireAuthentication, function(req, res) {
 	db.todo.create(body).then(function(todo) {
 		req.user.addTodo(todo).then(function() {
 			return todo.reload();
-		}).then(function(todo){
+		}).then(function(todo) {
 			res.json(todo.toJSON());
 		});
 	}).catch(function(e) {
@@ -102,7 +110,8 @@ app.delete('/todos/:someId', middleware.requireAuthentication, function(req, res
 
 	db.todo.destroy({
 		where: {
-			id: requestedId
+			id: requestedId,
+			userId: req.user.get('id')
 		}
 	}).then(function(rowsDeleted) {
 		if (rowsDeleted === 0) {
@@ -142,7 +151,12 @@ app.put('/todos/:someId', middleware.requireAuthentication, function(req, res) {
 
 	// searching for a todo with a matching id 	
 	// the id has to match the request parameters entered -> someId
-	db.todo.findById(requestedId).then(function(todo) {
+	db.todo.findOne({
+		where: {
+			id: requestedId,
+			userId: req.user.get('id')
+		}
+	}).then(function(todo) {
 		if (todo) {
 			todo.update(attributes).then(function(todo) {
 				res.json(todo.toJSON());
@@ -191,7 +205,7 @@ app.post('/users/login', function(req, res) {
 
 
 db.sequelize.sync({
-	force: true
+	//force: true
 }).then(function() {
 	app.listen(PORT, function() {
 		console.log('Express server started on port ' + PORT);
